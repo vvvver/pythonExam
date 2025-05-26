@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+      crossorigin="anonymous"
+    >
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>{% block title %}Электронная библиотека{% endblock %}</title>
+  </head>
+  <body class="d-flex flex-column min-vh-100">
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
+      <div class="container">
+        <a class="navbar-brand fw-bold" href="{{ url_for('main.index') }}">
+          <i class="bi bi-book-half"></i> Электронная библиотека
+        </a>
+        <button class="navbar-toggler" type="button"
+                data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false"
+                aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('main.index') }}">Главная</a>
+            </li>
+            {% if current_user.is_authenticated and current_user.role.name=='admin' %}
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('stats.stats_actions') }}">
+                Статистика
+              </a>
+            </li>
+            {% endif %}
+          </ul>
+
+          <ul class="navbar-nav ms-auto align-items-center">
+            {% if current_user.is_authenticated %}
+            <li class="nav-item">
+              <span class="navbar-text text-muted me-3">
+                {{ current_user.last_name }}
+                {{ current_user.first_name }}
+                {% if current_user.patronymic %}{{ current_user.patronymic }}{% endif %}
+              </span>
+            </li>
+            <li class="nav-item">
+              <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('auth.logout') }}">
+                Выйти
+              </a>
+            </li>
+            {% else %}
+            <li class="nav-item">
+              <a class="btn btn-primary btn-sm" href="{{ url_for('auth.login') }}">
+                Войти
+              </a>
+            </li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <main class="flex-grow-1 container py-4">
+      {% with msgs = get_flashed_messages(with_categories=true) %}
+        {% if msgs %}
+          {% for cat,msg in msgs %}
+            <div class="alert alert-{{ cat }} alert-dismissible fade show" role="alert">
+              {{ msg }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </main>
+
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <form method="post" id="deleteForm" class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Удаление книги</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <p id="deleteModalBody">Вы уверены?</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+              Отмена
+            </button>
+            <button type="submit" class="btn btn-danger">Да, удалить</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <footer class="bg-secondary text-white text-center py-3 mt-auto">
+      <div class="container">
+        <small>Виданова Вероника Павловна – Группа 231-351</small>
+      </div>
+    </footer>
+
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+      crossorigin="anonymous"
+    ></script>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var deleteModalEl = document.getElementById('deleteModal');
+      deleteModalEl.addEventListener('show.bs.modal', function (event) {
+        var btn    = event.relatedTarget;
+        var bookId = btn.getAttribute('data-book-id');
+        var title  = btn.getAttribute('data-book-title');
+        var form   = document.getElementById('deleteForm');
+        var body   = document.getElementById('deleteModalBody');
+
+        form.action = "{{ url_for('main.book_delete', book_id=0) }}".replace('0', bookId);
+        body.textContent = 'Вы уверены, что хотите удалить книгу «' + title + '»?';
+      });
+    });
+    </script>
+  </body>
+</html>
